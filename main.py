@@ -1,7 +1,7 @@
 import os, csv
 from flask import Flask, flash, request, redirect, url_for, send_from_directory
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 from PIL import Image, ImageFont, ImageDraw  
 import numpy as np
 
@@ -89,7 +89,9 @@ def uploaded_file(filename):
     return redirect(url_for('render_image'))
 
 
-def fill(pixels, s, firstdate, datewidth, color=(127,127,127)):
+def fill(pixels, s, firstdate, datewidth, color=(127,127,127), offset=0):
+    s['start'] = s['start'] - timedelta(hours=offset)
+    s['stop'] = s['stop'] - timedelta(hours=offset)
     start = s['start'].hour * 60 + s['start'].minute
     stop = s['stop'].hour * 60 + s['stop'].minute
     diff = date_diff(firstdate, s['start'])
@@ -138,11 +140,12 @@ def render_image():
     
     numdates = date_diff(firstdate, lastdate) + 1
 
+    offset_h = 8
     datewidth=900//numdates
     img = Image.new( 'RGB', (numdates*datewidth,24*60), "white")
     pixels = img.load()
     for s in sleep:
-        fill(pixels, s, firstdate, datewidth)
+        fill(pixels, s, firstdate, datewidth, offset=offset_h)
 
     # create average day column
     imgarr = np.asarray(img)
@@ -156,7 +159,7 @@ def render_image():
     for j in range(0, 24*60, 60):
         for i in range(img.size[0]):
             pixels[i, j] = (0, 0, 0)
-        draw.text((10, j), str(j//60), font=font, fill=(0, 0, 0))  
+        draw.text((10, j), str((j//60+offset_h)%24), font=font, fill=(0, 0, 0))  
     
     img.save('static/babysleep.png', 'png')
 
