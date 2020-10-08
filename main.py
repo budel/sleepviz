@@ -59,7 +59,9 @@ def uploaded_file(filename):
 def render_image():
 
     basefile = os.path.join(app.config['UPLOAD_FOLDER'], 'base.csv')
-    visualizeCSV(basefile)
+    img, img_mean = visualizeCSV(basefile)
+    img.save('static/babysleep.png', 'png')
+    img_mean.save('static/weightedmeanbabysleep.png', 'png')
 
     return '''
     <img src="static/babysleep.png" alt="babysleep">

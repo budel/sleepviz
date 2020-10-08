@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from PIL import Image, ImageFont, ImageDraw  
 import numpy as np
 
-def visualizeCSV(csvfile, out_file='static/babysleep.png', out_file_mean='static/weightedmeanbabysleep.png'):
+def visualizeCSV(csvfile):
 
     sleep = []
     firstdate = datetime.max
@@ -32,9 +32,9 @@ def visualizeCSV(csvfile, out_file='static/babysleep.png', out_file_mean='static
     # create average day column
     imgarr = np.asarray(img)
     mean_img = linearMovingAverage(imgarr[:, ::datewidth].astype(float))
-    saveMeanImg(mean_img, out_file_mean, 50)
+    mean_img = genMeanImg(mean_img, 50)
     #mean_img = imgarr.mean(axis=1)
-    #saveMeanImg(mean_img, 'static/meanbabysleep.png', 20)
+    #mean_img = genMeanImg(mean_img, 20)
 
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype(r'static/open-sans.ttf', 16)  
@@ -43,7 +43,7 @@ def visualizeCSV(csvfile, out_file='static/babysleep.png', out_file_mean='static
             pixels[i, j] = (0, 0, 0)
         draw.text((10, j), str((j//60+offset_h)%24), font=font, fill=(0, 0, 0))  
     
-    img.save(out_file, 'png')
+    return img, mean_img
 
 
 def date_diff(d1, d2):
@@ -83,9 +83,15 @@ def linearMovingAverage(imgarr):
     mean_img = [(i+1) * imgarr[:, i] for i in range(n)]
     return 2/(n*(n+1)) * sum(mean_img)
 
-def saveMeanImg(mean_img, out_file, sz=50):
+def genMeanImg(mean_img, sz=50):
     mean_img = ((mean_img - mean_img.min()) * (1/(mean_img.max() - mean_img.min()) * 255))
     mean_img = np.expand_dims(mean_img, axis=1)
     mean_img = np.tile(mean_img, (1,sz,1))
     mean_img = Image.fromarray(np.uint8(mean_img))
-    mean_img.save(out_file, 'png')
+    return mean_img
+
+
+if __name__ == '__main__':
+    img, img_mean = visualizeCSV('static/base.csv')
+    img.save('static/babysleep.png', 'png')
+    img_mean.save('static/weightedmeanbabysleep.png', 'png')
