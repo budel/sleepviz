@@ -2,6 +2,8 @@ import csv
 from datetime import datetime, timedelta
 from PIL import Image, ImageFont, ImageDraw  
 import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 def visualizeCSV(csvfile):
 
@@ -27,7 +29,13 @@ def visualizeCSV(csvfile):
     img = Image.new( 'RGB', (numdates*datewidth,24*60), "white")
     pixels = img.load()
     for s in sleep:
-        fill(pixels, s, firstdate, datewidth, offset=offset_h)
+        fill_pixel(pixels, s, firstdate, datewidth, offset=offset_h)
+    
+    sleeparr = np.ones((numdates, 24*60))
+    for s in sleep:
+        sleeparr = fill_array(sleeparr, s, firstdate)
+
+    polarPlot(sleeparr)
 
     # create average day column
     imgarr = np.asarray(img)
@@ -58,14 +66,14 @@ def date_diff(d1, d2):
     return (d2 - d1).days
 
 
-def fill(pixels, s, firstdate, datewidth, color=(127,127,127), offset=0):
-    s['start'] = s['start'] - timedelta(hours=offset)
-    s['stop'] = s['stop'] - timedelta(hours=offset)
-    start = s['start'].hour * 60 + s['start'].minute
-    stop = s['stop'].hour * 60 + s['stop'].minute
-    diff = date_diff(firstdate, s['start'])
+def fill_pixel(pixels, s, firstdate, datewidth, color=(127,127,127), offset=0):
+    sstart = s['start'] - timedelta(hours=offset)
+    sstop = s['stop'] - timedelta(hours=offset)
+    start = sstart.hour * 60 + sstart.minute
+    stop = sstop.hour * 60 + sstop.minute
+    diff = date_diff(firstdate, sstart)
 
-    if s['start'].day == s['stop'].day:
+    if sstart.day == sstop.day:
         for i in range(diff*datewidth, diff*datewidth+datewidth):
             for j in range(start, stop):
                 pixels[i,j] = color
@@ -77,6 +85,27 @@ def fill(pixels, s, firstdate, datewidth, color=(127,127,127), offset=0):
             for j in range(0, stop):
                 pixels[i,j] = color
        
+
+def fill_array(imgarr, s, firstdate, offset=0):    
+    sstart = s['start'] - timedelta(hours=offset)
+    sstop = s['stop'] - timedelta(hours=offset)
+    start = sstart.hour * 60 + sstart.minute
+    stop = sstop.hour * 60 + sstop.minute
+    diff = date_diff(firstdate, sstart)
+
+    if sstart.day == sstop.day:
+        for i in range(diff, diff+1):
+            for j in range(start, stop):
+                imgarr[i,j] = 0
+    else:
+        for i in range(diff, diff+1):
+            for j in range(start, 24*60):
+                imgarr[i,j] = 0
+        for i in range(diff+1, diff+2):
+            for j in range(0, stop):
+                imgarr[i,j] = 0
+       
+    return imgarr
 
 def linearMovingAverage(imgarr):
     n = imgarr.shape[1]
@@ -90,8 +119,27 @@ def genMeanImg(mean_img, sz=50):
     mean_img = Image.fromarray(np.uint8(mean_img))
     return mean_img
 
+def polarPlot(imgarr):
+    radius, angle = imgarr.shape
+
+    ax = plt.subplot(111, projection='polar')
+    x = np.linspace(0, 2*np.pi, angle)
+    y = np.linspace(0, radius, radius)
+    X, Y = np.meshgrid(x, y)
+    ax.pcolormesh(X, Y, imgarr, cmap='gray')
+    ax.set_rmax(radius+1)
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    ax.set_rorigin(-5)
+    ax.set_rticks([])  # No radial ticks
+    ticks = np.arange(0, 2*np.pi, step=2*np.pi/24)
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(np.round(ticks * 24/(2*np.pi)).astype(int))
+
+    plt.savefig('static/polarsleep.png', dpi=300, bbox_inches='tight')
+
 
 if __name__ == '__main__':
     img, img_mean = visualizeCSV('static/base.csv')
-    img.save('static/babysleep.png', 'png')
-    img_mean.save('static/weightedmeanbabysleep.png', 'png')
+    # img.save('static/babysleep.png', 'png')
+    # img_mean.save('static/weightedmeanbabysleep.png', 'png')

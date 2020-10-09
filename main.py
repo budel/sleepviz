@@ -66,6 +66,7 @@ def render_image():
     return '''
     <img src="static/babysleep.png" alt="babysleep">
     <img src="static/weightedmeanbabysleep.png" alt="weightedmeanbabysleep">
+    <img src="static/polarsleep.png" alt="polarsleep">
     <!--
     <img src="static/meanbabysleep.png" alt="meanbabysleep">
     -->
