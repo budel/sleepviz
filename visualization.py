@@ -7,21 +7,7 @@ from tqdm import tqdm
 
 def visualizeCSV(csvfile):
 
-    sleep = []
-    firstdate = datetime.max
-    lastdate = datetime.min
-    with open(csvfile, 'r') as f:
-        myreader = csv.reader(f)
-        next(myreader)
-        for i, row in enumerate(myreader):
-            sleep.append({})
-            sleep[i]['sid'] = row[0]
-            sleep[i]['start'] = datetime.fromtimestamp(int(row[1]) / 1000)
-            sleep[i]['stop'] = datetime.fromtimestamp(int(row[2]) / 1000)
-            sleep[i]['rating'] = row[3]
-            firstdate = firstdate if firstdate < sleep[i]['start'] else sleep[i]['start']
-            lastdate = lastdate if lastdate > sleep[i]['stop'] else sleep[i]['stop']
-    
+    sleep, firstdate, lastdate = readCSV(csvfile)
     numdates = date_diff(firstdate, lastdate) + 1
 
     offset_h = 8
@@ -31,12 +17,6 @@ def visualizeCSV(csvfile):
     for s in sleep:
         fill_pixel(pixels, s, firstdate, datewidth, offset=offset_h)
     
-    sleeparr = np.ones((numdates, 24*60))
-    for s in sleep:
-        sleeparr = fill_array(sleeparr, s, firstdate)
-
-    polarPlot(sleeparr)
-
     # create average day column
     imgarr = np.asarray(img)
     mean_img = linearMovingAverage(imgarr[:, ::datewidth].astype(float))
@@ -52,6 +32,24 @@ def visualizeCSV(csvfile):
         draw.text((10, j), str((j//60+offset_h)%24), font=font, fill=(0, 0, 0))  
     
     return img, mean_img
+
+
+def readCSV(csvfile):
+    sleep = []
+    firstdate = datetime.max
+    lastdate = datetime.min
+    with open(csvfile, 'r') as f:
+        myreader = csv.reader(f)
+        next(myreader)
+        for i, row in enumerate(myreader):
+            sleep.append({})
+            sleep[i]['sid'] = row[0]
+            sleep[i]['start'] = datetime.fromtimestamp(int(row[1]) / 1000)
+            sleep[i]['stop'] = datetime.fromtimestamp(int(row[2]) / 1000)
+            sleep[i]['rating'] = row[3]
+            firstdate = firstdate if firstdate < sleep[i]['start'] else sleep[i]['start']
+            lastdate = lastdate if lastdate > sleep[i]['stop'] else sleep[i]['stop']
+    return sleep, firstdate, lastdate
 
 
 def date_diff(d1, d2):
@@ -85,6 +83,45 @@ def fill_pixel(pixels, s, firstdate, datewidth, color=(127,127,127), offset=0):
             for j in range(0, stop):
                 pixels[i,j] = color
        
+def linearMovingAverage(imgarr):
+    n = imgarr.shape[1]
+    mean_img = [(i+1) * imgarr[:, i] for i in range(n)]
+    return 2/(n*(n+1)) * sum(mean_img)
+
+def genMeanImg(mean_img, sz=50):
+    mean_img = ((mean_img - mean_img.min()) * (1/(mean_img.max() - mean_img.min()) * 255))
+    mean_img = np.expand_dims(mean_img, axis=1)
+    mean_img = np.tile(mean_img, (1,sz,1))
+    mean_img = Image.fromarray(np.uint8(mean_img))
+    return mean_img
+
+def polarPlot(base_csv):
+    sleep, firstdate, lastdate = readCSV(base_csv)
+    numdates = date_diff(firstdate, lastdate) + 1
+
+    sleeparr = np.ones((numdates, 24*60))
+    for s in sleep:
+        sleeparr = fill_array(sleeparr, s, firstdate)
+
+    radius, angle = sleeparr.shape
+    print(sleeparr.shape)
+
+    ax = plt.subplot(111, projection='polar')
+    x = np.linspace(0, 2*np.pi, angle)
+    y = np.linspace(0, radius, radius)
+    X, Y = np.meshgrid(x, y)
+    ax.pcolormesh(X, Y, sleeparr, cmap='gray')
+    ax.set_rmax(radius+1)
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    ax.set_rorigin(-5)
+    ax.set_rticks([])  # No radial ticks
+    ticks = np.arange(0, 2*np.pi, step=2*np.pi/24)
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(np.round(ticks * 24/(2*np.pi)).astype(int))
+
+    plt.savefig('static/polarsleep.png', dpi=300, bbox_inches='tight')
+
 
 def fill_array(imgarr, s, firstdate, offset=0):    
     sstart = s['start'] - timedelta(hours=offset)
@@ -106,38 +143,6 @@ def fill_array(imgarr, s, firstdate, offset=0):
                 imgarr[i,j] = 0
        
     return imgarr
-
-def linearMovingAverage(imgarr):
-    n = imgarr.shape[1]
-    mean_img = [(i+1) * imgarr[:, i] for i in range(n)]
-    return 2/(n*(n+1)) * sum(mean_img)
-
-def genMeanImg(mean_img, sz=50):
-    mean_img = ((mean_img - mean_img.min()) * (1/(mean_img.max() - mean_img.min()) * 255))
-    mean_img = np.expand_dims(mean_img, axis=1)
-    mean_img = np.tile(mean_img, (1,sz,1))
-    mean_img = Image.fromarray(np.uint8(mean_img))
-    return mean_img
-
-def polarPlot(imgarr):
-    radius, angle = imgarr.shape
-
-    ax = plt.subplot(111, projection='polar')
-    x = np.linspace(0, 2*np.pi, angle)
-    y = np.linspace(0, radius, radius)
-    X, Y = np.meshgrid(x, y)
-    ax.pcolormesh(X, Y, imgarr, cmap='gray')
-    ax.set_rmax(radius+1)
-    ax.set_theta_zero_location("N")
-    ax.set_theta_direction(-1)
-    ax.set_rorigin(-5)
-    ax.set_rticks([])  # No radial ticks
-    ticks = np.arange(0, 2*np.pi, step=2*np.pi/24)
-    ax.set_xticks(ticks)
-    ax.set_xticklabels(np.round(ticks * 24/(2*np.pi)).astype(int))
-
-    plt.savefig('static/polarsleep.png', dpi=300, bbox_inches='tight')
-
 
 if __name__ == '__main__':
     img, img_mean = visualizeCSV('static/base.csv')

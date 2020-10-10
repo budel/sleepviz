@@ -2,7 +2,8 @@ import os
 from flask import Flask, flash, request, redirect, url_for, send_from_directory
 from werkzeug.utils import secure_filename
 from curation import mergeCSV
-from visualization import visualizeCSV
+from visualization import visualizeCSV, polarPlot
+import threading
 
 UPLOAD_FOLDER = 'static/'
 ALLOWED_EXTENSIONS = {'txt', 'csv'}
@@ -52,8 +53,10 @@ def uploaded_file(filename):
     newfile = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     mergeCSV(basefile, newfile)
 
-    return redirect(url_for('render_image'))
+    thread = threading.Thread(target=polarPlot, args=(basefile, ))
+    thread.start()
 
+    return redirect(url_for('render_image'))
 
 @app.route('/image')
 def render_image():
