@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from PIL import Image, ImageFont, ImageDraw  
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
+import pandas as pd
 
 def visualizeCSV(csvfile):
 
@@ -95,30 +95,37 @@ def genMeanImg(mean_img, sz=50):
     mean_img = Image.fromarray(np.uint8(mean_img))
     return mean_img
 
+# see https://stackoverflow.com/questions/46575723/creating-a-temporal-range-time-series-spiral-plot
 def polarPlot(base_csv):
-    sleep, firstdate, lastdate = readCSV(base_csv)
-    numdates = date_diff(firstdate, lastdate) + 1
+    UTC_TIMEDIFF = 2
+    # load dataset and parse timestamps
+    df = pd.read_csv(base_csv)
+    df[['start', 'stop']] = df[['start', 'stop']].apply(pd.to_datetime, unit='ms')
 
-    sleeparr = np.ones((numdates, 24*60))
-    for s in sleep:
-        sleeparr = fill_array(sleeparr, s, firstdate)
+    # set origin at the first hour, correcting for utc
+    first_trip = df['start'].min()
+    origin = (first_trip - pd.to_timedelta(first_trip.hour + UTC_TIMEDIFF, unit='h')).replace(minute=0, second=0)
+    hours_ticks = np.arange(0, 24).tolist()
 
-    radius, angle = sleeparr.shape
-    print(sleeparr.shape)
+    # convert trip timestamps to day fractions
+    df['start'] = (df['start'] - origin) / np.timedelta64(1, 'D')
+    df['stop']  = (df['stop']  - origin) / np.timedelta64(1, 'D')
 
     ax = plt.subplot(111, projection='polar')
-    x = np.linspace(0, 2*np.pi, angle)
-    y = np.linspace(0, radius, radius)
-    X, Y = np.meshgrid(x, y)
-    ax.pcolormesh(X, Y, sleeparr, cmap='gray')
-    ax.set_rmax(radius+1)
+    for idx, event in df.iterrows():
+        tstart, tstop = event.loc[['start', 'stop']]
+        # timestamps are in day fractions, 2pi is one day
+        nsamples = int(1000. * (tstop - tstart))
+        t = np.linspace(tstart, tstop, nsamples)
+        theta = 2 * np.pi * t
+        ax.plot(theta, t, lw=3, color='gray')
+
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     ax.set_rorigin(-5)
     ax.set_rticks([])  # No radial ticks
-    ticks = np.arange(0, 2*np.pi, step=2*np.pi/24)
-    ax.set_xticks(ticks)
-    ax.set_xticklabels(np.round(ticks * 24/(2*np.pi)).astype(int))
+    ax.set_xticks(np.linspace(0, 2*np.pi, 24, endpoint=False))
+    ax.set_xticklabels(hours_ticks)
 
     plt.savefig('static/polarsleep.png', dpi=300, bbox_inches='tight')
 
