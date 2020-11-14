@@ -31,6 +31,13 @@ def visualizeCSV(csvfile):
             pixels[i, j] = (0, 0, 0)
         draw.text((10, j), str((j//60+offset_h)%24), font=font, fill=(0, 0, 0))  
     
+    for i in range(0, numdates*datewidth, datewidth):
+        c = firstdate + timedelta(i / datewidth)
+        if c.day == 17:
+            for j in range(24*60):
+                pixels[i+datewidth//2, j] = (0, 0, 0)
+            
+    
     return img, mean_img
 
 
