@@ -100,21 +100,28 @@ def polarPlot(base_csv):
     # load dataset and parse timestamps
     df = pd.read_csv(base_csv)
     df[['start', 'stop']] = df[['start', 'stop']].apply(pd.to_datetime, unit='ms')
-    df['start'] = df['start'].dt.tz_localize('Europe/Berlin', ambiguous=True)
-    df['stop'] = df['stop'].dt.tz_localize('Europe/Berlin', ambiguous=True)
+    df['start'] = df['start'].dt.tz_localize('utc').dt.tz_convert('Europe/Berlin')
+    df['stop'] = df['stop'].dt.tz_localize('utc').dt.tz_convert('Europe/Berlin')
 
     # set origin at the first hour, correcting for utc
     first_trip = df['start'].min()
-    origin = (first_trip - pd.to_timedelta(first_trip.hour, unit='h')).replace(minute=0, second=0)
+    origin = first_trip.replace(hour=0, minute=0, second=0)
     hours_ticks = np.arange(0, 24).tolist()
-
-    # convert trip timestamps to day fractions
-    df['start'] = (df['start'] - origin) / np.timedelta64(1, 'D')
-    df['stop']  = (df['stop']  - origin) / np.timedelta64(1, 'D')
 
     ax = plt.subplot(111, projection='polar')
     for idx, event in df.iterrows():
         tstart, tstop = event.loc[['start', 'stop']]
+
+        # convert trip timestamps to day fractions
+        if tstart < pd.Timestamp(2020,10,25).tz_localize('Europe/Berlin'):
+            tstart -= origin
+            tstop -= origin
+        else:
+            tstart -= origin.replace(hour=1)
+            tstop -= origin.replace(hour=1)
+        tstart /= np.timedelta64(1, 'D')
+        tstop /= np.timedelta64(1, 'D')
+
         # timestamps are in day fractions, 2pi is one day
         nsamples = int(1000. * (tstop - tstart))
         t = np.linspace(tstart, tstop, nsamples)
