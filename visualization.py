@@ -97,14 +97,15 @@ def genMeanImg(mean_img, sz=50):
 
 # see https://stackoverflow.com/questions/46575723/creating-a-temporal-range-time-series-spiral-plot
 def polarPlot(base_csv):
-    UTC_TIMEDIFF = 2
     # load dataset and parse timestamps
     df = pd.read_csv(base_csv)
     df[['start', 'stop']] = df[['start', 'stop']].apply(pd.to_datetime, unit='ms')
+    df['start'] = df['start'].dt.tz_localize('Europe/Berlin')
+    df['stop'] = df['stop'].dt.tz_localize('Europe/Berlin')
 
     # set origin at the first hour, correcting for utc
     first_trip = df['start'].min()
-    origin = (first_trip - pd.to_timedelta(first_trip.hour + UTC_TIMEDIFF, unit='h')).replace(minute=0, second=0)
+    origin = (first_trip - pd.to_timedelta(first_trip.hour, unit='h')).replace(minute=0, second=0)
     hours_ticks = np.arange(0, 24).tolist()
 
     # convert trip timestamps to day fractions
@@ -118,7 +119,7 @@ def polarPlot(base_csv):
         nsamples = int(1000. * (tstop - tstart))
         t = np.linspace(tstart, tstop, nsamples)
         theta = 2 * np.pi * t
-        ax.plot(theta, t, lw=3, color='gray')
+        ax.plot(theta, t, lw=1.5, color='gray')
 
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
