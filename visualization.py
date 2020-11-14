@@ -100,8 +100,8 @@ def polarPlot(base_csv):
     # load dataset and parse timestamps
     df = pd.read_csv(base_csv)
     df[['start', 'stop']] = df[['start', 'stop']].apply(pd.to_datetime, unit='ms')
-    df['start'] = df['start'].dt.tz_localize('Europe/Berlin')
-    df['stop'] = df['stop'].dt.tz_localize('Europe/Berlin')
+    df['start'] = df['start'].dt.tz_localize('Europe/Berlin', ambiguous=True)
+    df['stop'] = df['stop'].dt.tz_localize('Europe/Berlin', ambiguous=True)
 
     # set origin at the first hour, correcting for utc
     first_trip = df['start'].min()
