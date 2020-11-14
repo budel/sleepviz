@@ -29,7 +29,7 @@ def visualizeCSV(csvfile):
     for j in range(0, 24*60, 60):
         for i in range(img.size[0]):
             pixels[i, j] = (0, 0, 0)
-        draw.text((10, j), str((j//60+offset_h)%24), font=font, fill=(0, 0, 0))  
+        draw.text((img.size[0] - 20, j), str((j//60+offset_h)%24), font=font, fill=(0, 0, 0))  
     
     for i in range(0, numdates*datewidth, datewidth):
         c = firstdate + timedelta(i / datewidth)
