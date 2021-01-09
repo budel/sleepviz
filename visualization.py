@@ -10,7 +10,7 @@ def visualizeCSV(csvfile):
     sleep, firstdate, lastdate = readCSV(csvfile)
     numdates = date_diff(firstdate, lastdate) + 1
 
-    offset_h = 8
+    offset_h = 7
     datewidth=900//numdates
     img = Image.new( 'RGB', (numdates*datewidth,24*60), "white")
     pixels = img.load()
@@ -133,7 +133,7 @@ def polarPlot(base_csv):
         nsamples = int(1000. * (tstop - tstart))
         t = np.linspace(tstart, tstop, nsamples)
         theta = 2 * np.pi * t
-        ax.plot(theta, t, lw=1.5, color='gray')
+        ax.plot(theta, t, lw=1, color='gray')
 
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
