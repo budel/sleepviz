@@ -8,6 +8,7 @@ import pandas as pd
 def visualizeCSV(csvfile):
 
     sleep, firstdate, lastdate = readCSV(csvfile)
+    print_top(10, sleep)
     numdates = date_diff(firstdate, lastdate) + 1
 
     offset_h = 7
@@ -59,6 +60,11 @@ def readCSV(csvfile):
             lastdate = lastdate if lastdate > sleep[i]['stop'] else sleep[i]['stop']
     return sleep, firstdate, lastdate
 
+def print_top(n, sleep):
+    sleep_sorted = sorted(sleep, key=lambda x: x['duration'], reverse=True)
+    for s in sleep_sorted[:n]:
+        print(s['start'], s['duration'])
+    
 
 def date_diff(d1, d2):
     d1 = d1.replace(hour = 0)
