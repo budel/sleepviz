@@ -67,19 +67,25 @@ def print_top(n, sleep):
         print(s['start'], s['duration'])
 
 def plot_duration_per_day(sleep):
-    cur_dates = [sleep[0]['start'].date()]
+    cdates = [sleep[0]['start'].date()]
+    cum_durations = [sleep[0]['duration'] / timedelta(hours=1)]
     max_durations = [sleep[0]['duration'] / timedelta(hours=1)]
     for s in sleep:
         sdate = s['start'].date()
         dur = s['duration'] / timedelta(hours=1) 
-        if sdate == cur_dates[-1] and dur > max_durations[-1]:
-            max_durations[-1] = dur
-        elif sdate != cur_dates[-1]:
-            cur_dates.append(sdate)
+        if sdate == cdates[-1]:
+            cum_durations[-1] += dur
+            if dur > max_durations[-1]:
+                max_durations[-1] = dur
+        elif sdate != cdates[-1]:
+            cdates.append(sdate)
             max_durations.append(dur)
+            cum_durations.append(dur)
     fig, ax = plt.subplots()
-    ax.plot(cur_dates, max_durations, '.-')
+    ax.bar(cdates, cum_durations, width=1.0)
+    ax.bar(cdates, max_durations, width=1.0, color='red')
     ax.xaxis_date()
+    ax.autoscale(enable=True, axis='x', tight=True)
     fig.autofmt_xdate()
     plt.savefig('static/durations.png', dpi=160, bbox_inches='tight')
     
