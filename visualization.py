@@ -9,6 +9,7 @@ def visualizeCSV(csvfile):
 
     sleep, firstdate, lastdate = readCSV(csvfile)
     print_top(10, sleep)
+    plot_duration_per_day(sleep)
     numdates = date_diff(firstdate, lastdate) + 1
 
     offset_h = 7
@@ -64,6 +65,23 @@ def print_top(n, sleep):
     sleep_sorted = sorted(sleep, key=lambda x: x['duration'], reverse=True)
     for s in sleep_sorted[:n]:
         print(s['start'], s['duration'])
+
+def plot_duration_per_day(sleep):
+    cur_dates = [sleep[0]['start'].date()]
+    max_durations = [sleep[0]['duration'] / timedelta(hours=1)]
+    for s in sleep:
+        sdate = s['start'].date()
+        dur = s['duration'] / timedelta(hours=1) 
+        if sdate == cur_dates[-1] and dur > max_durations[-1]:
+            max_durations[-1] = dur
+        elif sdate != cur_dates[-1]:
+            cur_dates.append(sdate)
+            max_durations.append(dur)
+    fig, ax = plt.subplots()
+    ax.plot(cur_dates, max_durations, '.-')
+    ax.xaxis_date()
+    fig.autofmt_xdate()
+    plt.savefig('static/durations.png', dpi=160, bbox_inches='tight')
     
 
 def date_diff(d1, d2):
