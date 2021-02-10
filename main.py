@@ -53,8 +53,8 @@ def uploaded_file(filename):
     newfile = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     mergeCSV(basefile, newfile)
 
-    thread = threading.Thread(target=polarPlot, args=(basefile, ))
-    thread.start()
+    # thread = threading.Thread(target=polarPlot, args=(basefile, ))
+    # thread.start()
 
     return redirect(url_for('render_image'))
 
@@ -70,8 +70,9 @@ def render_image():
     <img src="static/babysleep.png" alt="babysleep">
     <img src="static/weightedmeanbabysleep.png" alt="weightedmeanbabysleep">
     <img src="static/durations.png" alt="durations">
-    <img src="static/polarsleep.png" alt="polarsleep">
+    <img src="static/phases.png" alt="phases">
     <!--
+    <img src="static/polarsleep.png" alt="polarsleep">
     <img src="static/meanbabysleep.png" alt="meanbabysleep">
     -->
     '''

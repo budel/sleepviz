@@ -10,6 +10,7 @@ def visualizeCSV(csvfile):
     sleep, firstdate, lastdate = readCSV(csvfile)
     print_top(10, sleep)
     plot_duration_per_day(sleep)
+    plot_phases_per_night(sleep)
     numdates = date_diff(firstdate, lastdate) + 1
 
     offset_h = 7
@@ -95,7 +96,31 @@ def plot_duration_per_day(sleep):
     ax.autoscale(enable=True, axis='x', tight=True)
     fig.autofmt_xdate()
     plt.savefig('static/durations.png', dpi=160, bbox_inches='tight')
+
     
+def plot_phases_per_night(sleep):
+    start = datetime.strptime("19:00:00", "%H:%M:%S").time()
+    end = datetime.strptime("07:00:00", "%H:%M:%S").time()
+    cdates = [sleep[0]['start'].date()]
+    counts = [0]
+    for s in sleep:
+        if is_between(s['start'].time(), start, end) and is_between(s['stop'].time(), start, end):
+            counts[-1]+=1
+        elif cdates[-1] != s['start'].date():
+            counts.append(0)
+            cdates.append(s['start'].date())
+    fig, ax = plt.subplots()
+    ax.bar(cdates, counts, width=1.0)
+    ax.xaxis_date()
+    ax.autoscale(enable=True, axis='x', tight=True)
+    fig.autofmt_xdate()
+    plt.savefig('static/phases.png', dpi=160, bbox_inches='tight')
+
+def is_between(now, start, end):
+    if (start < end):
+        return start <= now and now <= end
+    return not(end < now and now < start)
+
 
 def date_diff(d1, d2):
     d1 = d1.replace(hour = 0)
@@ -171,7 +196,7 @@ def polarPlot(base_csv):
         nsamples = int(1000. * (tstop - tstart))
         t = np.linspace(tstart, tstop, nsamples)
         theta = 2 * np.pi * t
-        ax.plot(theta, t, lw=1, color='gray')
+        ax.plot(theta, t, lw=0.8, color='gray')
 
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
