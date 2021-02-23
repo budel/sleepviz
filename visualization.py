@@ -15,7 +15,7 @@ def visualizeCSV(csvfile):
 
     offset_h = 7
     datewidth=900//numdates
-    img = Image.new( 'RGB', (numdates*datewidth,24*60), "white")
+    img = Image.new( 'RGB', (numdates*datewidth,24*60+25), "white")
     pixels = img.load()
     for s in sleep:
         fill_pixel(pixels, s, firstdate, datewidth, offset=offset_h)
@@ -33,9 +33,15 @@ def visualizeCSV(csvfile):
         for i in range(img.size[0]):
             pixels[i, j] = (0, 0, 0)
         draw.text((img.size[0] - 20, j), str((j//60+offset_h)%24), font=font, fill=(0, 0, 0))  
-    
+
     for i in range(0, numdates*datewidth, datewidth):
-        c = firstdate + timedelta(i / datewidth)
+        datediff = i // datewidth
+        c = firstdate + timedelta(datediff)
+        weeksincebirth = (36+datediff)//7
+        if c.weekday() == 0 and weeksincebirth%2:
+            draw.text((i+datewidth, 24*60), str(weeksincebirth), font=font, fill=(0,0,0))
+            for j in range(24*60,24*60+25):
+                pixels[i, j] = (0, 0, 0)
         if c.day == 17:
             for j in range(24*60):
                 pixels[i+datewidth//2, j] = (0, 0, 0)
