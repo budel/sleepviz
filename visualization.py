@@ -134,6 +134,7 @@ def plot_histogram(sleep, n_bins=288):
     fig, ax = plt.subplots()
     durations = [s['duration'] / timedelta(hours=1) for s in sleep]
     ax.hist(durations, bins=n_bins)
+    ax.autoscale(enable=True, axis='x', tight=True)
     plt.savefig('static/histogram.png', dpi=160, bbox_inches='tight')
 
 def date_diff(d1, d2):
