@@ -11,10 +11,11 @@ def visualizeCSV(csvfile):
     print_top(10, sleep)
     plot_duration_per_day(sleep)
     plot_phases_per_night(sleep)
+    plot_histogram(sleep)
     numdates = date_diff(firstdate, lastdate) + 1
 
     offset_h = 7
-    datewidth=900//numdates
+    datewidth=950//numdates
     img = Image.new( 'RGB', (numdates*datewidth,24*60+25), "white")
     pixels = img.load()
     for s in sleep:
@@ -23,7 +24,7 @@ def visualizeCSV(csvfile):
     # create average day column
     imgarr = np.asarray(img)
     mean_img = linearMovingAverage(imgarr[:, ::datewidth].astype(float))
-    mean_img = genMeanImg(mean_img, 50)
+    mean_img = genMeanImg(mean_img, 2*datewidth)
     #mean_img = imgarr.mean(axis=1)
     #mean_img = genMeanImg(mean_img, 20)
 
@@ -99,6 +100,7 @@ def plot_duration_per_day(sleep):
     ax.bar(cdates, cum_durations, width=1.0)
     ax.bar(cdates, max_durations, width=1.0, color='red')
     ax.xaxis_date()
+    ax.yaxis.grid(True)
     ax.autoscale(enable=True, axis='x', tight=True)
     fig.autofmt_xdate()
     plt.savefig('static/durations.png', dpi=160, bbox_inches='tight')
@@ -127,6 +129,11 @@ def is_between(now, start, end):
         return start <= now and now <= end
     return not(end < now and now < start)
 
+def plot_histogram(sleep, n_bins=288):
+    fig, ax = plt.subplots()
+    durations = [s['duration'] / timedelta(hours=1) for s in sleep]
+    ax.hist(durations, bins=n_bins)
+    plt.savefig('static/histogram.png', dpi=160, bbox_inches='tight')
 
 def date_diff(d1, d2):
     d1 = d1.replace(hour = 0)

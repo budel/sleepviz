@@ -71,6 +71,7 @@ def render_image():
     <img src="static/weightedmeanbabysleep.png" alt="weightedmeanbabysleep">
     <img src="static/durations.png" alt="durations">
     <img src="static/phases.png" alt="phases">
+    <img src="static/histogram.png" alt="histogram">
     <!--
     <img src="static/polarsleep.png" alt="polarsleep">
     <img src="static/meanbabysleep.png" alt="meanbabysleep">
