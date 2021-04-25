@@ -64,6 +64,7 @@ def readCSV(csvfile):
             sleep[i]['start'] = datetime.fromtimestamp(int(row[1]) / 1000)
             sleep[i]['stop'] = datetime.fromtimestamp(int(row[2]) / 1000)
             sleep[i]['rating'] = row[3]
+            assert(sleep[i]['stop'] > sleep[i]['start'])
             sleep[i]['duration'] = sleep[i]['stop'] - sleep[i]['start']
             firstdate = firstdate if firstdate < sleep[i]['start'] else sleep[i]['start']
             lastdate = lastdate if lastdate > sleep[i]['stop'] else sleep[i]['stop']
