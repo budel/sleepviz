@@ -65,13 +65,18 @@ def render_image():
     img, img_mean = visualizeCSV(basefile)
     img.save('static/babysleep.png', 'png')
     img_mean.save('static/weightedmeanbabysleep.png', 'png')
+    hists = ''
+    for path, currentDirectory, files in os.walk("static"):
+        for file in sorted(files)[::-1]:
+            if file.startswith("histogram"):
+                hists += f'<img src="{os.path.join(path, file)}" alt="histogram">'
 
-    return '''
+    return f'''
     <img src="static/babysleep.png" alt="babysleep">
     <img src="static/weightedmeanbabysleep.png" alt="weightedmeanbabysleep">
     <img src="static/durations.png" alt="durations">
     <img src="static/phases.png" alt="phases">
-    <img src="static/histogram.png" alt="histogram">
+    {hists}
     <!--
     <img src="static/polarsleep.png" alt="polarsleep">
     <img src="static/meanbabysleep.png" alt="meanbabysleep">

@@ -11,8 +11,10 @@ def visualizeCSV(csvfile):
     print_top(10, sleep)
     plot_duration_per_day(sleep)
     plot_phases_per_night(sleep)
-    plot_histogram(sleep)
     numdates = date_diff(firstdate, lastdate) + 1
+    # Todo: Think about Dec/Jan
+    plot_histogram(sleep, lastdate.month-1, lastdate.year)
+    plot_histogram(sleep, lastdate.month, lastdate.year)
 
     offset_h = 7
     datewidth=950//numdates
@@ -130,12 +132,16 @@ def is_between(now, start, end):
         return start <= now and now <= end
     return not(end < now and now < start)
 
-def plot_histogram(sleep, n_bins=288):
+
+def plot_histogram(sleep, month, year, n_bins=288):
     fig, ax = plt.subplots()
-    durations = [s['duration'] / timedelta(hours=1) for s in sleep]
+    durations = [s['duration'] / timedelta(hours=1) for s in sleep if s['stop'].month == month and s['stop'].year == year]
     ax.hist(durations, bins=n_bins)
     ax.autoscale(enable=True, axis='x', tight=True)
-    plt.savefig('static/histogram.png', dpi=160, bbox_inches='tight')
+    Ms = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    plt.title(f'{Ms[month-1]} {year}')
+    plt.savefig(f'static/histogram{year}_{month:02d}.png', dpi=160, bbox_inches='tight')
+
 
 def date_diff(d1, d2):
     d1 = d1.replace(hour = 0)
